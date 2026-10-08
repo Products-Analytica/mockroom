@@ -43,7 +43,7 @@ In Supabase, go to **Authentication > URL Configuration**:
 1. Sign in to Vercel with the shared GitHub account, click **Add New > Project** and import the repository.
 2. Add these environment variables:
    - `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` (Supabase **Project Settings > API**)
-   - `NEXT_PUBLIC_GEMINI_MODEL`, for example `gemini-2.5-flash`
+   - `NEXT_PUBLIC_GEMINI_MODELS`: Gemini models to try in order, comma-separated, for example `gemini-2.5-flash,gemini-2.5-flash-lite` (see [AI models and busy periods](#ai-models-and-busy-periods)). The older single-model `NEXT_PUBLIC_GEMINI_MODEL` still works if this isn't set.
 3. Deploy, then put the Vercel address into Supabase's URL Configuration (step 5) and the Google OAuth client's JavaScript origins (step 4.3).
 
 ### 7. Logos (optional)
@@ -61,6 +61,17 @@ Students sign in with Google, then submit their full name and SAP ID (11 digits)
 
 - **Committee view** (`/admin`): the nav shows a badge with the number waiting. Approve or reject each student (a rejection can include a note the student sees; they can fix their details and resubmit), or tick several and click **Approve selected**. The Approved and Rejected filters let you revoke access or correct a name or SAP ID, and the Approved filter has a CSV export of approved students.
 - **Batch list:** upload a CSV with the columns `sap_id,full_name` (for example exported from the official class list). Students whose SAP ID is on this list are approved automatically when they submit their details. Duplicates are skipped and invalid rows are listed so you can fix them. Students who signed up before the list was uploaded are shown with a one-click **Approve** link. In Excel, format the SAP ID column as Text before exporting so long numbers aren't turned into `8.06E+10`.
+
+## AI models and busy periods
+Google's free Gemini models are sometimes overloaded. The app handles this on its own, one request at a time:
+- **Busy (503 / "overloaded" / "high demand"):** retries the same model after 2 seconds, then 5 seconds, then moves to the next model in `NEXT_PUBLIC_GEMINI_MODELS`.
+- **Rate-limited (429):** waits 10 seconds and retries once, then moves to the next model.
+- **Retired or unknown model (404):** skips it straight away and doesn't try it again for the rest of the browser session.
+- The model that last worked is tried first for the rest of the session, and each report records which model(s) answered.
+
+While this happens the student sees "The AI is busy, retrying…". Only if every model fails do they see "Google's AI is very busy right now. Your progress is saved. Press Retry in a minute." Retry carries on from where it stopped, so no answers are lost. Follow-up questions during the interview get one quick try per model and are skipped if the AI is busy, so the room never stalls.
+
+When Google retires a model, update `NEXT_PUBLIC_GEMINI_MODELS` in Vercel and redeploy. List current models at ai.google.dev/gemini-api/docs/models.
 
 ## Handover checklist
 When the committee changes:

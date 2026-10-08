@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import AuthGate from '@/components/AuthGate';
 import { KeyForm, KEY_PRIVACY } from '@/components/GeminiKey';
-import { getKey, clearKey, maskKey, MODEL } from '@/lib/gemini';
+import { getKey, clearKey, maskKey, MODELS } from '@/lib/gemini';
 
 export default function Page(){ return <AuthGate><Settings /></AuthGate>; }
 
@@ -35,7 +35,7 @@ function Settings(){
         <>
           <label>Saved key</label>
           <p style={{ fontFamily: 'var(--mono)', margin: 0 }}>{maskKey(key)}</p>
-          <p className="hint">Model: {MODEL}. {KEY_PRIVACY}</p>
+          <p className="hint">{MODELS.length > 1 ? 'Models' : 'Model'}: {MODELS.join(', ')}. {KEY_PRIVACY}</p>
           <div className="actions">
             <button onClick={() => { setReplacing(true); setSaved(false); }}>Replace key</button>
             <button className="link" onClick={remove}>Remove key</button>
