@@ -5,7 +5,7 @@
 drop table if exists public.interview_details, public.resumes, public.allowed_domains cascade;
 
 create table if not exists public.admins (email text primary key);
-insert into public.admins (email) values ('your.email@gmail.com') on conflict do nothing;
+insert into public.admins (email) values ('productsanalytica@gmail.com') on conflict do nothing;
 
 create table if not exists public.roster (
   sap_id text primary key check (sap_id ~ '^\d{11}$'),
