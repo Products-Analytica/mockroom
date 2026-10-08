@@ -1,0 +1,42 @@
+import Link from 'next/link';
+
+export const metadata = { title: 'Privacy Policy – Mock Interview Room (Analytica, SBM NMIMS Mumbai)' };
+
+const SUPPORT_EMAIL = 'productsanalytica@gmail.com';
+const Email = () => SUPPORT_EMAIL.includes('@') ? <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a> : <>{SUPPORT_EMAIL}</>;
+
+export default function Privacy(){
+  return (
+    <section className="inner">
+      <nav className="nav"><Link href="/" className="brand">Mock Interview Room</Link></nav>
+      <p className="eyebrow">Analytica, SBM NMIMS Mumbai</p>
+      <h1>Privacy Policy</h1>
+      <p className="lede">How the Mock Interview Room handles your data.</p>
+
+      <h2>What we collect</h2>
+      <p>Your Google account name and email (for sign-in), the full name and SAP ID you enter, and summary results of your mock interviews (scores, verdict and overall feedback).</p>
+
+      <h2>What stays on your device</h2>
+      <p>Your resume, the job descriptions you paste, your answers, detailed per-question feedback and your Gemini API key are stored only in your browser and are never sent to our database.</p>
+
+      <h2>Who sees your data</h2>
+      <p>You, and Analytica committee members, who see your name, SAP ID, email and interview summary results to approve access and plan placement preparation.</p>
+
+      <h2>Third-party services</h2>
+      <ul>
+        <li><strong>Supabase:</strong> sign-in and database.</li>
+        <li><strong>Vercel:</strong> hosting.</li>
+        <li><strong>Google:</strong> sign-in, and the Gemini AI that you connect with your own API key. Google's terms apply to that key.</li>
+        <li><strong>Your browser's speech recognition service:</strong> transcribes spoken answers.</li>
+      </ul>
+
+      <h2>Deleting your data</h2>
+      <p>Email <Email /> to have your account and results deleted. You can delete individual interviews yourself from your dashboard.</p>
+
+      <h2>Contact</h2>
+      <p><Email /></p>
+
+      <div className="actions"><Link href="/" className="button">Back to Mock Interview Room</Link></div>
+    </section>
+  );
+}
