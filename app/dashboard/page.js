@@ -3,7 +3,6 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import AuthGate, { useAuth } from '@/components/AuthGate';
 import { ScoreTrend, DimBars, avgDims } from '@/components/Charts';
-import { supabase } from '@/lib/supabase';
 import { deleteReport, listReports } from '@/lib/local';
 import { fmtDate, weakest, DIM_LABEL } from '@/lib/format';
 
@@ -12,27 +11,15 @@ export default function Page(){ return <AuthGate needsKey><Dashboard /></AuthGat
 function Dashboard(){
   const { user, profile } = useAuth();
   const [rows, setRows] = useState(null);
-  const [err, setErr] = useState('');
-  const [unsynced, setUnsynced] = useState([]);
 
-  useEffect(() => {
-    supabase.from('interviews').select('id,created_at,role_title,score,verdict,dims,answered')
-      .eq('user_id', user.id).order('created_at', { ascending: false })
-      .then(({ data, error }) => {
-        if(error) setErr(error.message);
-        setRows(data || []);
-        // Interviews finished on this laptop whose summary didn't reach the database.
-        const ids = new Set((data || []).map(r => r.id));
-        if(!error) setUnsynced(listReports().filter(r => !r.synced && r.user_id === user.id && !ids.has(r.id)));
-      });
-  }, [user.id]);
+  // Only this student's reports, in case several students share a laptop.
+  const load = () => setRows(listReports().filter(r => r.user_id === user.id));
+  useEffect(() => { load(); }, [user.id]);
 
-  async function remove(id){
+  function remove(id){
     if(!window.confirm('Delete this interview and its report?')) return;
-    const { error } = await supabase.from('interviews').delete().eq('id', id);
-    if(error) return setErr(error.message);
     deleteReport(id);
-    setRows(r => r.filter(x => x.id !== id));
+    load();
   }
 
   const first = (profile.full_name || '').split(' ')[0];
@@ -47,13 +34,7 @@ function Dashboard(){
       <p className="eyebrow">Your practice record</p>
       <h1>{first ? `Hi ${first}.` : 'Welcome.'} {rows.length ? 'Ready for another round?' : 'Let\'s run your first interview.'}</h1>
       <div className="actions" style={{ marginTop: 0 }}><Link href="/interview" className="button primary">Start a mock interview</Link></div>
-      {err && <p className="err">{err}</p>}
-      {unsynced.length > 0 && (
-        <p className="hint">
-          {unsynced.length === 1 ? 'One interview on this laptop hasn\'t' : `${unsynced.length} interviews on this laptop haven't`} synced to your record yet. Open {unsynced.length === 1 ? 'it' : 'each one'} to retry:{' '}
-          {unsynced.map((r, i) => <span key={r.id}>{i ? ', ' : ''}<Link href={`/report/${r.id}`}>{r.role_title} ({fmtDate(r.created_at)})</Link></span>)}
-        </p>
-      )}
+      <p className="hint">Your interview history is saved in this browser only.</p>
 
       {rows.length === 0 ? (
         <p className="lede" style={{ marginTop: 30 }}>An interview takes about 15 minutes. Have the job description ready and headphones on.</p>

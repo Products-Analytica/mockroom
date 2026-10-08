@@ -2,8 +2,8 @@
 import { memo, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import AuthGate, { useAuth } from '@/components/AuthGate';
-import { toRows } from '@/lib/format';
-import { getDraft, saveDraft, saveReport, syncReport } from '@/lib/local';
+import { toReport } from '@/lib/format';
+import { getDraft, saveDraft, saveReport } from '@/lib/local';
 
 export default function Page(){ return <AuthGate needsKey><Interview /></AuthGate>; }
 
@@ -26,12 +26,9 @@ function Interview(){
         // The resume and JD stay in this browser only.
         onStart: ({ jd, resume }) => saveDraft(resume, jd),
         onComplete: async session => {
-          // The full report (answers and per-question feedback) is kept only on this device.
-          // Only the summary row goes to the database; if that fails the report page offers a retry.
-          const { row, items } = toRows(session, user.id);
-          const report = { ...row, id: crypto.randomUUID(), created_at: new Date().toISOString(), items, synced: false };
+          // The whole report stays in this browser; nothing about the interview goes to the database.
+          const report = toReport(session, user.id);
           saveReport(report);
-          await syncReport(report);
           router.push(`/report/${report.id}`);
         },
         onKeyRejected: () => router.push('/settings?key=rejected')

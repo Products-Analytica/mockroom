@@ -14,13 +14,13 @@ export default function Privacy(){
       <p className="lede">How the Mock Interview Room handles your data.</p>
 
       <h2>What we collect</h2>
-      <p>Your Google account name and email (for sign-in), the full name and SAP ID you enter, and summary results of your mock interviews (scores, verdict and overall feedback).</p>
+      <p>Only your Google account name and email (for sign-in), and the full name and SAP ID you enter.</p>
 
       <h2>What stays on your device</h2>
-      <p>Your resume, the job descriptions you paste, your answers, detailed per-question feedback and your Gemini API key are stored only in your browser and are never sent to our database.</p>
+      <p>Your resume, the job descriptions you paste, your answers, your interview reports, scores and feedback, and your Gemini API key are stored only in your browser and are never sent to our database.</p>
 
       <h2>Who sees your data</h2>
-      <p>You, and Analytica committee members, who see your name, SAP ID, email and interview summary results to approve access and plan placement preparation.</p>
+      <p>Analytica committee members see your name, SAP ID and email to approve access.</p>
 
       <h2>Third-party services</h2>
       <ul>
@@ -31,7 +31,7 @@ export default function Privacy(){
       </ul>
 
       <h2>Deleting your data</h2>
-      <p>Email <Email /> to have your account and results deleted. You can delete individual interviews yourself from your dashboard.</p>
+      <p>Email <Email /> to have your account deleted. Your interviews are stored only in your browser, and you can delete them yourself from your dashboard.</p>
 
       <h2>Contact</h2>
       <p><Email /></p>

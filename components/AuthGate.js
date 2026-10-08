@@ -110,7 +110,7 @@ function ProfileForm({ profile: p, onDone, onCancel }){
         <input id="fullName" autoComplete="name" value={name} onChange={e => setName(e.target.value)} maxLength={80} required />
         <label htmlFor="sapId">SAP ID</label>
         <input id="sapId" inputMode="numeric" placeholder="11 digits" value={sap} maxLength={11} onChange={e => setSap(e.target.value.replace(/\D/g, ''))} required />
-        <p className="hint">The Analytica committee checks these before you can start. They'll see your name, SAP ID, Google email, scores and summary feedback. Your resume, JDs and answers stay on your laptop.</p>
+        <p className="hint">The Analytica committee checks these before you can start. They'll see your name, SAP ID and Google email. Your resume, JDs, answers and interview results stay on your laptop.</p>
         <div className="actions">
           <button className="primary" type="submit" disabled={saving}>{saving ? 'Saving…' : rejected ? 'Resubmit' : 'Submit'}</button>
           {onCancel && <button type="button" className="link" onClick={onCancel}>Cancel</button>}

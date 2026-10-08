@@ -1,152 +1,262 @@
 'use client';
-import { Fragment, useEffect, useMemo, useState } from 'react';
-import Link from 'next/link';
+import { useEffect, useMemo, useState } from 'react';
 import AuthGate from '@/components/AuthGate';
-import { DimBars, avgDims } from '@/components/Charts';
-import { fetchAll } from '@/lib/supabase';
-import { DIM_LABEL, fmtDate, weakest, downloadCSV } from '@/lib/format';
+import { supabase, fetchAll } from '@/lib/supabase';
+import { fmtDate, downloadCSV } from '@/lib/format';
 
-export default function Page(){ return <AuthGate adminOnly><Admin /></AuthGate>; }
+export default function Page(){ return <AuthGate adminOnly><Approvals /></AuthGate>; }
 
-const COLS = [
-  { key: 'name', label: 'Student' },
-  { key: 'sap', label: 'SAP ID' },
-  { key: 'count', label: 'Interviews' },
-  { key: 'latest', label: 'Latest' },
-  { key: 'best', label: 'Best' },
-  { key: 'avg', label: 'Average' },
-  { key: 'weak', label: 'Weakest area' },
-  { key: 'last', label: 'Last practiced' }
-];
+const TABS = [{ key: 'pending', label: 'Pending' }, { key: 'approved', label: 'Approved' }, { key: 'rejected', label: 'Rejected' }];
+const SAP = /^\d{11}$/;
+const changed = () => window.dispatchEvent(new Event('mr:approvals-changed'));
 
-function Admin(){
-  const [data, setData] = useState(null);
+function Approvals(){
+  const [profiles, setProfiles] = useState(null);
+  const [roster, setRoster] = useState(null);
   const [err, setErr] = useState('');
+  const [tab, setTab] = useState('pending');
   const [q, setQ] = useState('');
-  const [sort, setSort] = useState({ key: 'last', dir: -1 });
-  const [open, setOpen] = useState(null);
-  const [filter, setFilter] = useState('all');
+  const [selected, setSelected] = useState(new Set());
+  const [editing, setEditing] = useState(null);
+  const [busy, setBusy] = useState(false);
 
+  async function loadRoster(){ setRoster(new Set((await fetchAll('roster', 'sap_id')).map(r => r.sap_id))); }
   useEffect(() => {
     Promise.all([
-      // Approved students only; committee members without a SAP ID aren't students.
-      fetchAll('profiles', 'id,email,full_name,sap_id,created_at', q => q.eq('status', 'approved').not('sap_id', 'is', null)),
-      fetchAll('interviews', 'id,user_id,created_at,role_title,score,verdict,dims,answered')
-    ]).then(([profiles, all]) => {
-      const ids = new Set(profiles.map(p => p.id));
-      setData({ profiles, interviews: all.filter(iv => ids.has(iv.user_id)) });
-    }).catch(e => setErr(e.message));
+      fetchAll('profiles', 'id,email,full_name,sap_id,status,review_note,reviewed_at,created_at'),
+      loadRoster()
+    ]).then(([p]) => setProfiles(p)).catch(e => setErr(e.message));
   }, []);
 
-  const students = useMemo(() => {
-    if(!data) return [];
-    const byUser = new Map();
-    for(const iv of data.interviews){ if(!byUser.has(iv.user_id)) byUser.set(iv.user_id, []); byUser.get(iv.user_id).push(iv); }
-    return data.profiles.map(p => {
-      const ivs = (byUser.get(p.id) || []).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-      const scores = ivs.map(i => i.score);
-      return {
-        id: p.id, name: p.full_name || p.email, email: p.email, sap: p.sap_id, ivs, count: ivs.length,
-        latest: ivs[0]?.score ?? null, best: scores.length ? Math.max(...scores) : null,
-        avg: scores.length ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : null,
-        weak: weakest(avgDims(ivs)), last: ivs[0]?.created_at || null
-      };
-    });
-  }, [data]);
+  // Profiles without a SAP ID haven't submitted their details yet, so there's nothing to review.
+  const submitted = useMemo(() => (profiles || []).filter(p => p.sap_id), [profiles]);
+  const counts = useMemo(() => Object.fromEntries(TABS.map(t => [t.key, submitted.filter(p => p.status === t.key).length])), [submitted]);
 
   if(err) return <p className="err">{err}</p>;
-  if(!data) return <div className="working"><span className="spin" />Loading batch data…</div>;
+  if(!profiles || !roster) return <div className="working"><span className="spin" />Loading sign-ups…</div>;
 
-  const practiced = students.filter(s => s.count > 0);
-  const batchDims = avgDims(data.interviews);
-  const batchWeak = weakest(batchDims);
-  const batchAvg = data.interviews.length ? Math.round(data.interviews.reduce((a, i) => a + i.score, 0) / data.interviews.length) : 0;
-  const weakCount = batchWeak ? practiced.filter(s => s.weak === batchWeak).length : 0;
+  const t = q.trim().toLowerCase();
+  const rows = submitted
+    .filter(p => p.status === tab)
+    .filter(p => !t || (p.full_name || '').toLowerCase().includes(t) || p.sap_id.includes(t) || p.email.toLowerCase().includes(t))
+    .sort((a, b) => tab === 'pending' ? new Date(a.created_at) - new Date(b.created_at) : new Date(b.reviewed_at || b.created_at) - new Date(a.reviewed_at || a.created_at));
+  const notSubmitted = profiles.length - submitted.length;
+  const pendingOnRoster = submitted.filter(p => p.status === 'pending' && roster.has(p.sap_id));
 
-  let rows = students.filter(s => {
-    if(filter === 'none' && s.count) return false;
-    if(filter === 'low' && !(s.latest !== null && s.latest < 45)) return false;
-    const t = q.trim().toLowerCase();
-    return !t || s.name.toLowerCase().includes(t) || s.email.toLowerCase().includes(t) || s.sap.includes(t);
-  });
-  rows = rows.sort((a, b) => {
-    const va = a[sort.key], vb = b[sort.key];
-    if(va === null || va === undefined) return 1;
-    if(vb === null || vb === undefined) return -1;
-    return (sort.key === 'last' ? new Date(va) - new Date(vb) : va > vb ? 1 : va < vb ? -1 : 0) * sort.dir;
-  });
+  function merge(updated){
+    const byId = new Map(updated.map(u => [u.id, u]));
+    setProfiles(ps => ps.map(p => byId.get(p.id) || p));
+    setSelected(new Set());
+    changed();
+  }
 
-  function exportCSV(){
-    downloadCSV('mock-interviews-batch.csv', [
-      ['Name', 'SAP ID', 'Email', 'Interviews', 'Latest score', 'Best', 'Average', 'Weakest area', 'Last practiced'],
-      ...students.map(s => [s.name, s.sap, s.email, s.count, s.latest ?? '', s.best ?? '', s.avg ?? '', s.weak ? DIM_LABEL(s.weak) : '', s.last ? fmtDate(s.last) : ''])
+  async function setStatus(ids, status, note = null){
+    if(!ids.length) return;
+    setBusy(true); setErr('');
+    const updated = [];
+    // In batches, so a large selection doesn't overflow the request URL.
+    for(let i = 0; i < ids.length; i += 100){
+      const { data, error } = await supabase.from('profiles').update({ status, review_note: note }).in('id', ids.slice(i, i + 100)).select();
+      if(error){ setErr(error.message); break; }
+      updated.push(...data);
+    }
+    setBusy(false);
+    if(updated.length) merge(updated);
+  }
+
+  function reject(p, revoke = false){
+    const note = window.prompt(`${revoke ? 'Revoke access for' : 'Reject'} ${p.full_name}? Add an optional note the student will see:`, p.review_note || '');
+    if(note === null) return;
+    setStatus([p.id], 'rejected', note.trim() || null);
+  }
+
+  async function saveEdit(){
+    const n = editing.full_name.trim().replace(/\s+/g, ' '), s = editing.sap_id.trim();
+    if(n.length < 2 || n.length > 80) return setErr('Names must be 2 to 80 characters.');
+    if(!SAP.test(s)) return setErr('SAP IDs are exactly 11 digits.');
+    setBusy(true); setErr('');
+    const { data, error } = await supabase.from('profiles').update({ full_name: n, sap_id: s }).eq('id', editing.id).select();
+    setBusy(false);
+    if(error) return setErr(error.code === '23505' ? 'Another student already has that SAP ID.' : error.message);
+    merge(data);
+    setEditing(null);
+  }
+
+  function exportApproved(){
+    const approved = submitted.filter(p => p.status === 'approved').sort((a, b) => (a.full_name || '').localeCompare(b.full_name || ''));
+    downloadCSV('approved-students.csv', [
+      ['Name', 'SAP ID', 'Email', 'Approved'],
+      ...approved.map(p => [p.full_name, p.sap_id, p.email, p.reviewed_at ? fmtDate(p.reviewed_at) : ''])
     ]);
   }
+
+  const toggle = id => setSelected(s => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; });
+  const allOn = rows.length > 0 && rows.every(r => selected.has(r.id));
 
   return (
     <section>
       <p className="eyebrow">Analytica committee view</p>
-      <h1>How the batch is doing.</h1>
-      <div className="stats">
-        <div className="stat"><div className="n">{students.length}</div><div className="l">Approved students</div></div>
-        <div className="stat"><div className="n">{practiced.length}</div><div className="l">Have practiced</div></div>
-        <div className="stat"><div className="n">{data.interviews.length}</div><div className="l">Interviews</div></div>
-        <div className="stat"><div className="n">{batchAvg}</div><div className="l">Batch average</div></div>
+      <h1>Approvals.</h1>
+      <p className="lede">Check each student's name and SAP ID before they can start interviews. Interview results stay on students' own laptops and aren't visible here.</p>
+
+      <div className="tabs">
+        {TABS.map(x => (
+          <button key={x.key} className={tab === x.key ? 'on' : ''} onClick={() => { setTab(x.key); setSelected(new Set()); setEditing(null); }}>
+            {x.label}{x.key === 'pending' && counts.pending > 0 ? <span className="badge">{counts.pending}</span> : ` (${counts[x.key]})`}
+          </button>
+        ))}
       </div>
-
-      {batchDims && (
-        <>
-          <h2>Batch strengths and gaps</h2>
-          <DimBars dims={batchDims} />
-          <p className="hint"><strong>{DIM_LABEL(batchWeak)}</strong> is the batch's weakest area, and the weakest area for {weakCount} of {practiced.length} students who have practiced. A good topic for the next prep session.</p>
-        </>
-      )}
-
-      <h2>Students</h2>
       <div className="tools">
-        <input placeholder="Search name, email or SAP ID" value={q} onChange={e => setQ(e.target.value)} />
-        <select value={filter} onChange={e => setFilter(e.target.value)} style={{ maxWidth: 260 }}>
-          <option value="all">Everyone</option>
-          <option value="none">Haven't practiced yet</option>
-          <option value="low">Latest score below 45</option>
-        </select>
-        <button onClick={exportCSV}>Export CSV</button>
+        <input placeholder="Search name, SAP ID or email" value={q} onChange={e => setQ(e.target.value)} />
+        {tab === 'pending' && <button className="primary" disabled={busy || !selected.size} onClick={() => setStatus([...selected], 'approved')}>Approve selected{selected.size ? ` (${selected.size})` : ''}</button>}
+        {tab === 'approved' && counts.approved > 0 && <button onClick={exportApproved}>Export approved students (CSV)</button>}
       </div>
+      {err && <p className="err">{err}</p>}
+
       <div className="table-wrap">
         <table>
-          <thead><tr>{COLS.map(c => (
-            <th key={c.key} onClick={() => setSort(s => ({ key: c.key, dir: s.key === c.key ? -s.dir : (c.key === 'name' || c.key === 'sap' ? 1 : -1) }))}>
-              {c.label}{sort.key === c.key ? (sort.dir > 0 ? ' ▲' : ' ▼') : ''}
-            </th>))}</tr></thead>
+          <thead><tr>
+            {tab === 'pending' && <th className="check"><input type="checkbox" aria-label="Select all" checked={allOn} onChange={() => setSelected(allOn ? new Set() : new Set(rows.map(r => r.id)))} /></th>}
+            <th>Name</th><th>SAP ID</th><th>Google email</th><th>Signed up</th><th />
+          </tr></thead>
           <tbody>
-            {rows.map(s => (
-              <Fragment key={s.id}>
-                <tr className={s.count ? 'clickable' : ''} onClick={() => s.count && setOpen(o => o === s.id ? null : s.id)}>
-                  <td><strong>{s.name}</strong><div className="sub">{s.email}</div></td>
-                  <td>{s.sap}</td>
-                  <td>{s.count}</td>
-                  <td className="num">{s.latest ?? '-'}</td>
-                  <td className="num">{s.best ?? '-'}</td>
-                  <td className="num">{s.avg ?? '-'}</td>
-                  <td>{s.weak ? DIM_LABEL(s.weak) : '-'}</td>
-                  <td>{s.last ? fmtDate(s.last) : 'Not yet'}</td>
-                </tr>
-                {open === s.id && (
-                  <tr><td colSpan={COLS.length}>
-                    {s.ivs.map(iv => (
-                      <div className="list-row" key={iv.id}>
-                        <Link href={`/report/${iv.id}`}><strong>{iv.role_title}</strong><br /><span className="when">{fmtDate(iv.created_at)}, {iv.verdict}</span></Link>
-                        <span className="sc">{iv.score}</span>
-                      </div>
-                    ))}
-                  </td></tr>
-                )}
-              </Fragment>
+            {rows.map(p => editing?.id === p.id ? (
+              <tr key={p.id}>
+                {tab === 'pending' && <td className="check" />}
+                <td><input value={editing.full_name} maxLength={80} onChange={e => setEditing(x => ({ ...x, full_name: e.target.value }))} /></td>
+                <td><input value={editing.sap_id} maxLength={11} inputMode="numeric" onChange={e => setEditing(x => ({ ...x, sap_id: e.target.value.replace(/\D/g, '') }))} /></td>
+                <td>{p.email}</td>
+                <td>{fmtDate(p.created_at)}</td>
+                <td><div className="row-actions"><button className="primary" disabled={busy} onClick={saveEdit}>Save</button><button className="link" onClick={() => setEditing(null)}>Cancel</button></div></td>
+              </tr>
+            ) : (
+              <tr key={p.id}>
+                {tab === 'pending' && <td className="check"><input type="checkbox" aria-label={`Select ${p.full_name}`} checked={selected.has(p.id)} onChange={() => toggle(p.id)} /></td>}
+                <td><strong>{p.full_name || '-'}</strong>{p.status === 'rejected' && p.review_note && <div className="sub">Note: {p.review_note}</div>}</td>
+                <td>{p.sap_id}{roster.has(p.sap_id) && <div className="sub">On batch list</div>}</td>
+                <td>{p.email}</td>
+                <td>{fmtDate(p.created_at)}</td>
+                <td>
+                  <div className="row-actions">
+                    {p.status !== 'approved' && <button className="primary" disabled={busy} onClick={() => setStatus([p.id], 'approved')}>Approve</button>}
+                    {p.status === 'pending' && <button disabled={busy} onClick={() => reject(p)}>Reject</button>}
+                    {p.status === 'approved' && <button disabled={busy} onClick={() => reject(p, true)}>Revoke</button>}
+                    <button className="link" onClick={() => { setErr(''); setEditing({ id: p.id, full_name: p.full_name || '', sap_id: p.sap_id }); }}>Edit</button>
+                  </div>
+                </td>
+              </tr>
             ))}
           </tbody>
         </table>
       </div>
-      {!rows.length && <p className="hint">No students match.</p>}
+      {!rows.length && <p className="hint">{t ? 'No one matches.' : tab === 'pending' ? 'No one is waiting for approval.' : `No ${tab} students.`}</p>}
+      {tab === 'pending' && notSubmitted > 0 && <p className="hint">{notSubmitted} {notSubmitted === 1 ? 'person has' : 'people have'} signed in but not submitted their name and SAP ID yet.</p>}
+
+      <BatchList roster={roster} reload={loadRoster} pendingOnRoster={pendingOnRoster} onApprove={ids => setStatus(ids, 'approved')} busy={busy} />
     </section>
+  );
+}
+
+// Minimal CSV parser: handles quoted fields, escaped quotes and CRLF line endings.
+function parseCSV(text){
+  const rows = []; let row = [], field = '', quoted = false;
+  for(let i = 0; i < text.length; i++){
+    const c = text[i];
+    if(quoted){
+      if(c === '"' && text[i + 1] === '"'){ field += '"'; i++; }
+      else if(c === '"') quoted = false;
+      else field += c;
+    }else if(c === '"') quoted = true;
+    else if(c === ',') { row.push(field); field = ''; }
+    else if(c === '\n' || c === '\r'){
+      if(c === '\r' && text[i + 1] === '\n') i++;
+      row.push(field); rows.push(row); row = []; field = '';
+    }else field += c;
+  }
+  if(field || row.length){ row.push(field); rows.push(row); }
+  return rows;
+}
+
+function BatchList({ roster, reload, pendingOnRoster, onApprove, busy }){
+  const [working, setWorking] = useState(false);
+  const [result, setResult] = useState(null);
+  const [err, setErr] = useState('');
+
+  async function upload(e){
+    const f = e.target.files[0]; e.target.value = '';
+    if(!f) return;
+    setWorking(true); setErr(''); setResult(null);
+    try{
+      const lines = parseCSV((await f.text()).replace(/^﻿/, ''));
+      let sapCol = 0, nameCol = 1, start = 0;
+      const head = (lines[0] || []).map(h => h.trim().toLowerCase());
+      if(head.includes('sap_id')){ sapCol = head.indexOf('sap_id'); nameCol = head.indexOf('full_name'); start = 1; }
+      const valid = new Map(), invalid = [];
+      let repeats = 0;
+      for(let i = start; i < lines.length; i++){
+        const cells = lines[i];
+        if(cells.every(c => !c.trim())) continue;
+        const sap = (cells[sapCol] || '').trim();
+        const name = nameCol >= 0 ? (cells[nameCol] || '').trim() : '';
+        if(!SAP.test(sap)){ invalid.push({ line: i + 1, text: cells.join(',') }); continue; }
+        if(valid.has(sap)){ repeats++; continue; }
+        valid.set(sap, { sap_id: sap, full_name: name || null });
+      }
+      const all = [...valid.values()];
+      let added = 0;
+      for(let i = 0; i < all.length; i += 500){
+        const { data, error } = await supabase.from('roster').upsert(all.slice(i, i + 500), { onConflict: 'sap_id', ignoreDuplicates: true }).select('sap_id');
+        if(error) throw error;
+        added += data.length;
+      }
+      setResult({ added, skipped: all.length - added + repeats, invalid });
+      await reload();
+    }catch(e){ setErr(e.message || 'Couldn\'t read that file.'); }
+    setWorking(false);
+  }
+
+  async function clear(){
+    if(!window.confirm(`Remove all ${roster.size} SAP IDs from the batch list? Students already approved stay approved.`)) return;
+    setWorking(true); setErr(''); setResult(null);
+    const { error } = await supabase.from('roster').delete().not('sap_id', 'is', null);
+    if(error) setErr(error.message);
+    await reload();
+    setWorking(false);
+  }
+
+  return (
+    <>
+      <h2>Batch list</h2>
+      <p className="hint" style={{ marginTop: 0 }}>Students whose SAP ID is on this list are approved automatically.</p>
+      <p>Upload a CSV with the columns <code>sap_id,full_name</code>. SAP IDs already on the list are skipped.</p>
+      <div className="tools">
+        <div className="file-line" style={{ margin: 0 }}><span>CSV file:</span><input type="file" accept=".csv,text/csv" onChange={upload} disabled={working} /></div>
+        <span className="sub">{roster.size} SAP {roster.size === 1 ? 'ID' : 'IDs'} on the list</span>
+        {roster.size > 0 && <button className="link" onClick={clear} disabled={working}>Clear roster</button>}
+        {working && <span className="working"><span className="spin" />Working…</span>}
+      </div>
+      {err && <p className="err">{err}</p>}
+      {result && (
+        <div className="panel-note">
+          <strong>{result.added} {result.added === 1 ? 'row' : 'rows'} added.</strong>
+          {result.skipped > 0 && ` ${result.skipped} duplicate${result.skipped === 1 ? '' : 's'} ignored.`}
+          {result.invalid.length > 0 && (
+            <>
+              <p style={{ margin: '10px 0 4px' }}>{result.invalid.length} invalid {result.invalid.length === 1 ? 'row' : 'rows'} (SAP ID must be exactly 11 digits):</p>
+              <ul>
+                {result.invalid.slice(0, 20).map(r => <li key={r.line}><span className="sub">Line {r.line}:</span> <code>{r.text || '(empty SAP ID)'}</code></li>)}
+                {result.invalid.length > 20 && <li>…and {result.invalid.length - 20} more</li>}
+              </ul>
+            </>
+          )}
+        </div>
+      )}
+      {pendingOnRoster.length > 0 && (
+        <p className="hint">
+          {pendingOnRoster.length} pending {pendingOnRoster.length === 1 ? 'student is' : 'students are'} already on the list (they signed up before it was uploaded).{' '}
+          <button className="link" disabled={busy} onClick={() => onApprove(pendingOnRoster.map(p => p.id))}>Approve {pendingOnRoster.length === 1 ? 'them' : `all ${pendingOnRoster.length}`}</button>
+        </p>
+      )}
+    </>
   );
 }

@@ -10,7 +10,7 @@ export default function Nav({ limited = false }){
   const { profile, user, isAdmin } = useAuth();
   const path = usePathname();
   const [pending, setPending] = useState(0);
-  const cls = p => path === p || (p !== '/admin' && path.startsWith(p)) ? 'active' : '';
+  const cls = p => path.startsWith(p) ? 'active' : '';
   const who = profile?.full_name || user?.email;
 
   useEffect(() => {
@@ -32,8 +32,7 @@ export default function Nav({ limited = false }){
             <Link href="/dashboard" className={cls('/dashboard')}>My interviews</Link>
             <Link href="/interview" className={cls('/interview')}>New interview</Link>
             <Link href="/settings" className={cls('/settings')}>Settings</Link>
-            {isAdmin && <Link href="/admin" className={cls('/admin')}>Committee view</Link>}
-            {isAdmin && <Link href="/admin/approvals" className={cls('/admin/approvals')}>Approvals{pending > 0 && <span className="badge">{pending}</span>}</Link>}
+            {isAdmin && <Link href="/admin" className={cls('/admin')}>Committee view{pending > 0 && <span className="badge" title="Waiting for approval">{pending}</span>}</Link>}
           </>
         )}
         <span className="who">{who}{profile?.sap_id ? ` (${profile.sap_id})` : ''}</span>

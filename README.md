@@ -3,8 +3,8 @@
 AI mock interviews for the batch. The interviewer asks questions out loud, listens, follows up and scores each answer.
 
 - **Students** continue with any Google account, submit their full name and SAP ID, and are approved by the committee (automatically if their SAP ID is on the uploaded batch list). They then connect their own free Gemini API key once. The browser talks to Google's Gemini API directly with that key, so there is no AI bill and no AI server to run.
-- **Privacy:** the Gemini key, resume, JDs, answers and per-question feedback stay in the student's browser (localStorage). Only summary results (score, verdict, dimension scores and the overall debrief) go to the database.
-- **The committee** (emails listed in `public.admins`) approves students and sees names, SAP IDs, scores, verdicts, summary feedback and batch-wide weak areas.
+- **Privacy:** the Gemini key, resume, JDs, answers, interview reports, scores and feedback stay in the student's browser (localStorage). The database holds only sign-in and approval data: Google name and email, full name, SAP ID and approval status.
+- **The committee** (emails listed in `public.admins`) approves students and sees their names, SAP IDs and emails. Interview results are never visible to the committee.
 
 Stack: Next.js on Vercel, Supabase (Google sign-in, Postgres), Google Gemini (each student's own key), browser speech synthesis and speech recognition.
 
@@ -59,7 +59,7 @@ Committee members are approved automatically and don't need a SAP ID. If they ha
 ## Approving students
 Students sign in with Google, then submit their full name and SAP ID (11 digits). Until approved they see a "Waiting for approval" screen.
 
-- **Approvals tab** (`/admin/approvals`): the nav shows a badge with the number waiting. Approve or reject each student (a rejection can include a note the student sees; they can fix their details and resubmit), or tick several and click **Approve selected**. The Approved and Rejected filters let you revoke access or correct a name or SAP ID.
+- **Committee view** (`/admin`): the nav shows a badge with the number waiting. Approve or reject each student (a rejection can include a note the student sees; they can fix their details and resubmit), or tick several and click **Approve selected**. The Approved and Rejected filters let you revoke access or correct a name or SAP ID, and the Approved filter has a CSV export of approved students.
 - **Batch list:** upload a CSV with the columns `sap_id,full_name` (for example exported from the official class list). Students whose SAP ID is on this list are approved automatically when they submit their details. Duplicates are skipped and invalid rows are listed so you can fix them. Students who signed up before the list was uploaded are shown with a one-click **Approve** link. In Excel, format the SAP ID column as Text before exporting so long numbers aren't turned into `8.06E+10`.
 
 ## Handover checklist
@@ -82,5 +82,5 @@ Open http://localhost:3000 in Chrome.
 - **Gemini free tier:** each student's key has its own rate limits. If a student hits one, the app asks them to wait a minute and press Retry; nothing is lost. On Google's free tier, Google may use what's sent to improve its products, and students are told this when they connect their key.
 - **Free tiers:** Vercel Hobby is for non-commercial use. Supabase free projects pause after about a week with no activity; open the dashboard to resume.
 - **Browsers:** latest Chrome or Edge on a laptop work best. The interviewer's voice is the browser's own speech synthesis, so it varies between browsers and operating systems.
-- **Answers are per browser.** Interview history and summary reports are in the database and follow the student across devices. Answer-by-answer feedback is kept only in the browser where the interview was taken (the last 30), so clearing site data or switching laptops loses it.
+- **Interview history is per browser.** Reports are kept only in the browser where the interview was taken (the last 30), so clearing site data or switching laptops starts a fresh history. Students can use **Save as PDF** on a report to keep a copy.
 - **Speech-to-text** uses the browser's own service (Google in Chrome, Microsoft in Edge), so spoken answers are sent there for transcription.

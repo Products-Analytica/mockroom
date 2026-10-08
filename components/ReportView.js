@@ -1,12 +1,12 @@
 import { DIMS, DIM_LABEL, fmtDate, fmtSecs } from '@/lib/format';
 import { DimBars } from './Charts';
 
-export default function ReportView({ interview: iv, details, studentName }){
+export default function ReportView({ interview: iv, items }){
   const sm = iv.summary || {};
   const list = a => (a || []).map((x, i) => <li key={i}>{x}</li>);
   return (
     <section className="inner">
-      <p className="eyebrow">Mock interview debrief - {fmtDate(iv.created_at)}{studentName ? ` - ${studentName}` : ''}</p>
+      <p className="eyebrow">Mock interview debrief - {fmtDate(iv.created_at)}</p>
       <h1>{iv.role_title}</h1>
       <p className="lede">{sm.summary}</p>
       <div className="stats">
@@ -28,8 +28,7 @@ export default function ReportView({ interview: iv, details, studentName }){
       <h2>Practice plan</h2><ul>{list(sm.practice_plan)}</ul>
 
       <h2>Answer by answer</h2>
-      {!details && <p className="panel-note">Answer-by-answer feedback is only available on the device where the interview was taken.</p>}
-      {details && details.items.map((it, i) => (
+      {items.map((it, i) => (
         <details className="qa" key={i}>
           <summary>
             <span><span className="cat">{it.category}{it.followup ? ', follow-up' : ''}</span><br /><span className="q">{it.question}</span></span>
