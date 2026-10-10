@@ -167,9 +167,10 @@ function JdMatcher({ onOpen }){
 
   useEffect(() => {
     setHasKey(!!getKey());
+    // A cleared result keeps the box empty instead of refilling it with the interview JD.
     const saved = getGdResult();
-    setResult(saved);
-    setJd(saved?.jd || getDraft().jd || '');
+    setResult(saved?.picks ? saved : null);
+    setJd(saved ? saved.jd || '' : getDraft().jd || '');
   }, []);
 
   async function find(){
@@ -185,6 +186,11 @@ function JdMatcher({ onOpen }){
       setErr(e);
     }
     setBusy(false); setStatus('');
+  }
+
+  function clearJd(){
+    setJd(''); setResult(null); setErr(null);
+    saveGdResult({ jd: '', cleared: true });
   }
 
   function shuffle(){
@@ -206,13 +212,14 @@ function JdMatcher({ onOpen }){
         <div className="actions">
           <button className="primary" onClick={find} disabled={busy || jd.trim().length < 80}>{busy ? 'Finding topics…' : 'Find my topics'}</button>
           {busy && <span className="working"><span className="spin" />{status}</span>}
+          {!busy && (jd || result) && <button className="link" onClick={clearJd}>Clear JD</button>}
           {!busy && jd.trim().length > 0 && jd.trim().length < 80 && <span className="hint">Add a bit more of the JD (a few lines at least).</span>}
         </div>
       )}
       {err && err.isAuth && <p className="err">Google rejected your Gemini key. <Link href="/settings?key=rejected">Update it in Settings</Link>.</p>}
       {errMsg && <p className="err">{errMsg} <button className="retry" onClick={find}>Retry</button></p>}
 
-      {result && !busy && (
+      {result?.picks && !busy && (
         <div className="gd-results">
           {result.role_summary && <p className="lede" style={{ marginTop: 24 }}>{result.role_summary}</p>}
           {result.sectors?.length > 0 && <p className="hint">Closest sectors: {result.sectors.join(', ')}</p>}
