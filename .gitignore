@@ -15,4 +15,5 @@ roster*
 *roster*.json
 students*
 student-data/
-data/
+data/*
+!data/gd-topics.json

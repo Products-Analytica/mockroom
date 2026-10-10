@@ -31,6 +31,7 @@ export default function Nav({ limited = false }){
           <>
             <Link href="/dashboard" className={cls('/dashboard')}>My interviews</Link>
             <Link href="/interview" className={cls('/interview')}>New interview</Link>
+            <Link href="/gd" className={cls('/gd')}>GD Topics</Link>
             <Link href="/settings" className={cls('/settings')}>Settings</Link>
             {isAdmin && <Link href="/admin" className={cls('/admin')}>Committee view{pending > 0 && <span className="badge" title="Waiting for approval">{pending}</span>}</Link>}
           </>
