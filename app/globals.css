@@ -165,6 +165,10 @@ tr.clickable:hover td{background:#FDF8F8}
 .panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px 26px;margin:34px 0 10px;box-shadow:var(--shadow)}
 .panel textarea{min-height:120px}
 h3{font:600 12px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin:24px 0 10px}
+.browse-head{display:flex;align-items:center;justify-content:space-between;gap:12px 20px;flex-wrap:wrap;margin:44px 0 14px}
+.browse-head h2{margin:0}
+.browse-search{display:flex;align-items:center;gap:8px;flex:1 1 320px;max-width:440px}
+.browse-search input{padding:10px 14px}
 .sector-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
 .sector-card{position:relative;overflow:hidden;display:flex;flex-direction:column;gap:6px;text-align:left;padding:18px;border:1px solid var(--line);border-radius:14px;background:var(--card);font-weight:400;transition:transform .16s,box-shadow .16s,border-color .16s}
 .sector-card::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--accent-dark),var(--accent-bright));transform:scaleX(0);transform-origin:left;transition:transform .2s}

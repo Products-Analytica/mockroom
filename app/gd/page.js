@@ -60,8 +60,15 @@ function GdBank(){
 
       <JdMatcher onOpen={setOpenId} />
 
-      <h2>Browse by sector</h2>
-      <div className="sector-grid">
+      <div className="browse-head">
+        <h2>{query ? 'Search results' : 'Browse by sector'}</h2>
+        <div className="browse-search">
+          <input type="search" aria-label="Search topics" placeholder="Search topics, e.g. AI, GST, gig workers" value={query} onChange={e => setQuery(e.target.value)} />
+          {(sector || query) && <button className="link" onClick={() => { setSector(null); setQuery(''); }}>Clear{sector ? `: ${sector === BOOKMARKS ? 'My bookmarks' : sector}` : ''}</button>}
+        </div>
+      </div>
+      {/* While searching, the cards are hidden so matching topics appear right under the search box. */}
+      {!query && <div className="sector-grid">
         <button className={`sector-card${sector === BOOKMARKS ? ' active' : ''}`} onClick={() => pickSector(BOOKMARKS)}>
           <span className="sector-count">{bookmarks.length} saved</span>
           <span className="sector-name">My bookmarks</span>
@@ -74,12 +81,9 @@ function GdBank(){
             <span className="sector-blurb">{s.blurb}</span>
           </button>
         ))}
-      </div>
+      </div>}
 
-      <div className="tools" id="gd-lists">
-        <input placeholder="Search topics, e.g. AI, GST, gig workers, quick commerce" value={query} onChange={e => setQuery(e.target.value)} />
-        {(sector || query) && <button className="link" onClick={() => { setSector(null); setQuery(''); }}>Clear{sector ? `: ${sector === BOOKMARKS ? 'My bookmarks' : sector}` : ''}</button>}
-      </div>
+      <div id="gd-lists" />
 
       {groups.map(g => (
         <div key={g.name}>
