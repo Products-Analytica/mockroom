@@ -4,3 +4,15 @@ node_modules
 .env
 .DS_Store
 .Rhistory
+
+# Student data (batch lists, rosters, exports) must never be committed
+*.csv
+*.tsv
+*.xls
+*.xlsx
+*.ods
+roster*
+*roster*.json
+students*
+student-data/
+data/

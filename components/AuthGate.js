@@ -76,6 +76,7 @@ function Onboarding({ profile: p, onDone }){
 function ProfileForm({ profile: p, onDone, onCancel }){
   const [name, setName] = useState(p.full_name || '');
   const [sap, setSap] = useState(p.sap_id || '');
+  const [agreed, setAgreed] = useState(false);
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState('');
   const rejected = p.status === 'rejected';
@@ -86,8 +87,9 @@ function ProfileForm({ profile: p, onDone, onCancel }){
     const n = name.trim().replace(/\s+/g, ' '), s = sap.trim();
     if(n.length < 2 || n.length > 80){ setErr('Enter your full name (2 to 80 characters).'); return; }
     if(!/^\d{11}$/.test(s)){ setErr('Your SAP ID is exactly 11 digits.'); return; }
+    if(!agreed){ setErr('Please tick the box to agree to this use of your data.'); return; }
     setSaving(true);
-    const { error } = await supabase.from('profiles').update({ full_name: n, sap_id: s }).eq('id', p.id);
+    const { error } = await supabase.from('profiles').update({ full_name: n, sap_id: s, consent_at: new Date().toISOString() }).eq('id', p.id);
     setSaving(false);
     if(error){
       setErr(error.code === '23505' ? 'This SAP ID is already registered. If it\'s yours, contact the Analytica committee.' : error.message);
@@ -110,9 +112,13 @@ function ProfileForm({ profile: p, onDone, onCancel }){
         <input id="fullName" autoComplete="name" value={name} onChange={e => setName(e.target.value)} maxLength={80} required />
         <label htmlFor="sapId">SAP ID</label>
         <input id="sapId" inputMode="numeric" placeholder="11 digits" value={sap} maxLength={11} onChange={e => setSap(e.target.value.replace(/\D/g, ''))} required />
-        <p className="hint">The Analytica committee checks these before you can start. They'll see your name, SAP ID and Google email. Your resume, JDs, answers and interview results stay on your laptop.</p>
+        <p className="hint">We collect your name, email and SAP ID only to verify you're an NMIMS student. Your resume, answers and scores stay on your device. See our <a href="/privacy" target="_blank" rel="noopener noreferrer">Privacy Policy</a>.</p>
+        <label className="check">
+          <input type="checkbox" checked={agreed} onChange={e => setAgreed(e.target.checked)} required />
+          I agree to this use of my data.
+        </label>
         <div className="actions">
-          <button className="primary" type="submit" disabled={saving}>{saving ? 'Saving…' : rejected ? 'Resubmit' : 'Submit'}</button>
+          <button className="primary" type="submit" disabled={saving || !agreed}>{saving ? 'Saving…' : rejected ? 'Resubmit' : 'Submit'}</button>
           {onCancel && <button type="button" className="link" onClick={onCancel}>Cancel</button>}
         </div>
       </form>

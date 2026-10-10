@@ -20,8 +20,11 @@ create table if not exists public.profiles (
   status text not null default 'pending' check (status in ('pending','approved','rejected')),
   review_note text,
   reviewed_at timestamptz,
+  consent_at timestamptz,
   created_at timestamptz not null default now()
 );
+-- For projects created before consent_at existed.
+alter table public.profiles add column if not exists consent_at timestamptz;
 
 create table if not exists public.interviews (
   id uuid primary key default gen_random_uuid(),

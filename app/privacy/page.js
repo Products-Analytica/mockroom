@@ -12,6 +12,7 @@ export default function Privacy(){
       <p className="eyebrow">Analytica, SBM NMIMS Mumbai</p>
       <h1>Privacy Policy</h1>
       <p className="lede">How the Mock Interview Room handles your data.</p>
+      <p className="hint">Last updated: 10 October 2026</p>
 
       <h2>What we collect</h2>
       <p>Only your Google account name and email (for sign-in), and the full name and SAP ID you enter.</p>
@@ -29,6 +30,9 @@ export default function Privacy(){
         <li><strong>Google:</strong> sign-in, and the Gemini AI that you connect with your own API key. Google's terms apply to that key.</li>
         <li><strong>Your browser's speech recognition service:</strong> transcribes spoken answers.</li>
       </ul>
+
+      <h2>Data retention</h2>
+      <p>We delete all profiles (name, email, SAP ID) after the placement season ends, and within 30 days of any deletion request.</p>
 
       <h2>Deleting your data</h2>
       <p>Email <Email /> to have your account deleted. Your interviews are stored only in your browser, and you can delete them yourself from your dashboard.</p>
