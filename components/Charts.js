@@ -10,18 +10,18 @@ export function ScoreTrend({ points }){
     <svg className="chart" viewBox={`0 0 ${W} ${H}`} role="img" aria-label="Score over time">
       {[0, 50, 100].map(v => (
         <g key={v}>
-          <line x1={P} x2={W - P} y1={y(v)} y2={y(v)} stroke="rgba(255,255,255,.13)" />
-          <text x={P - 8} y={y(v) + 4} fill="#CDA9A6" fontSize="11" textAnchor="end" fontFamily="JetBrains Mono, monospace">{v}</text>
+          <line x1={P} x2={W - P} y1={y(v)} y2={y(v)} stroke="#E4E1EE" />
+          <text x={P - 8} y={y(v) + 4} fill="#6B6670" fontSize="11" textAnchor="end" fontFamily="IBM Plex Mono, monospace">{v}</text>
         </g>
       ))}
-      <polyline points={line} fill="none" stroke="#B8902F" strokeWidth="2.5" />
+      <polyline points={line} fill="none" stroke="#7A1420" strokeWidth="2.5" />
       {points.map((p, i) => (
         <g key={i}>
-          <circle cx={x(i)} cy={y(p.score)} r="4.5" fill="#B8902F"><title>{`${fmtDate(p.date)}: ${p.score}`}</title></circle>
+          <circle cx={x(i)} cy={y(p.score)} r="4.5" fill="#7A1420"><title>{`${fmtDate(p.date)}: ${p.score}`}</title></circle>
         </g>
       ))}
-      <text x={x(0)} y={H - 8} fill="#CDA9A6" fontSize="11" fontFamily="JetBrains Mono, monospace">{fmtDate(points[0].date)}</text>
-      <text x={x(points.length - 1)} y={H - 8} fill="#CDA9A6" fontSize="11" textAnchor="end" fontFamily="JetBrains Mono, monospace">{fmtDate(points[points.length - 1].date)}</text>
+      <text x={x(0)} y={H - 8} fill="#6B6670" fontSize="11" fontFamily="IBM Plex Mono, monospace">{fmtDate(points[0].date)}</text>
+      <text x={x(points.length - 1)} y={H - 8} fill="#6B6670" fontSize="11" textAnchor="end" fontFamily="IBM Plex Mono, monospace">{fmtDate(points[points.length - 1].date)}</text>
     </svg>
   );
 }

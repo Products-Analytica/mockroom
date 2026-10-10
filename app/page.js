@@ -26,13 +26,15 @@ export default function Landing(){
 
   return (
     <section>
-      <div className="logos">
-        <img src="/logo-nmims.png" alt="NMIMS" onError={e => { e.currentTarget.style.display = 'none'; }} />
-        <img src="/logo-analytica.png" alt="Analytica" onError={e => { e.currentTarget.style.display = 'none'; }} />
+      <div className="masthead">
+        <div className="logos">
+          <img src="/logo-nmims.png" alt="NMIMS" onError={e => { e.currentTarget.style.display = 'none'; }} />
+          <img src="/logo-analytica.png" alt="Analytica" onError={e => { e.currentTarget.style.display = 'none'; }} />
+        </div>
+        <p className="eyebrow">Corporate Intelligence &amp; Knowledge Management - Mock Interview Room</p>
+        <h1>Sit the interview <em>before</em> the interview.</h1>
+        <p className="lede">An AI interviewer reads your resume and the job description, asks you questions out loud, follows up on your answers, and gives you a scored debrief. Free for the batch.</p>
       </div>
-      <p className="eyebrow">Corporate Intelligence &amp; Knowledge Management - Mock Interview Room</p>
-      <h1>Sit the interview <em>before</em> the interview.</h1>
-      <p className="lede">An AI interviewer reads your resume and the job description, asks you questions out loud, follows up on your answers, and gives you a scored debrief. Free for the batch.</p>
 
       {!configured ? (
         <p className="err">This site isn't connected to its database yet. Add the Supabase keys to the environment variables (see README).</p>

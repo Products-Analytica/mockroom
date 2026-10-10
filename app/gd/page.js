@@ -131,13 +131,14 @@ function TopicModal({ t, saved, onBookmark, onClose }){
             <button className="link" onClick={onClose}>Close</button>
           </div>
         </div>
+        <div className="modal-body">
         <h3>Why this matters</h3>
         <p>{t.why}</p>
         <h3>Opening line</h3>
         <p className="starter">{t.starter}</p>
         <div className="cols">
-          <div><h3>For</h3><ul>{t.points_for.map((p, i) => <li key={i}>{p}</li>)}</ul></div>
-          <div><h3>Against</h3><ul>{t.points_against.map((p, i) => <li key={i}>{p}</li>)}</ul></div>
+          <div><h3 className="for">For</h3><ul>{t.points_for.map((p, i) => <li key={i}>{p}</li>)}</ul></div>
+          <div><h3 className="against">Against</h3><ul>{t.points_against.map((p, i) => <li key={i}>{p}</li>)}</ul></div>
         </div>
         {t.latest?.length > 0 && (
           <>
@@ -145,6 +146,7 @@ function TopicModal({ t, saved, onBookmark, onClose }){
             {t.latest.map((l, i) => <p key={i} className="latest"><span className="file-no">{l.date}</span> {l.text}</p>)}
           </>
         )}
+        </div>
       </div>
     </div>
   );
