@@ -112,7 +112,7 @@ function ProfileForm({ profile: p, onDone, onCancel }){
         <input id="fullName" autoComplete="name" value={name} onChange={e => setName(e.target.value)} maxLength={80} required />
         <label htmlFor="sapId">SAP ID</label>
         <input id="sapId" inputMode="numeric" placeholder="11 digits" value={sap} maxLength={11} onChange={e => setSap(e.target.value.replace(/\D/g, ''))} required />
-        <p className="hint">We collect your name, email and SAP ID only to verify you're an NMIMS student. Your resume, answers and scores stay on your device. See our <a href="/privacy" target="_blank" rel="noopener noreferrer">Privacy Policy</a>.</p>
+        <p className="hint">We collect your name, email and SAP ID only to verify you're an NMIMS student. We never store your resume, answers or scores; they're kept in your browser, and your resume and answers are sent to Google Gemini using your own key to generate feedback. See our <a href="/privacy" target="_blank" rel="noopener noreferrer">Privacy Policy</a>.</p>
         <label className="check">
           <input type="checkbox" checked={agreed} onChange={e => setAgreed(e.target.checked)} required />
           I agree to this use of my data.

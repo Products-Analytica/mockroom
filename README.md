@@ -3,7 +3,7 @@
 AI mock interviews for the batch. The interviewer asks questions out loud, listens, follows up and scores each answer.
 
 - **Students** continue with any Google account, submit their full name and SAP ID, and are approved by the committee (automatically if their SAP ID is on the uploaded batch list). They then connect their own free Gemini API key once. The browser talks to Google's Gemini API directly with that key, so there is no AI bill and no AI server to run.
-- **Privacy:** the Gemini key, resume, JDs, answers, interview reports, scores and feedback stay in the student's browser (localStorage). The database holds only sign-in and approval data: Google name and email, full name, SAP ID and approval status.
+- **Privacy:** we never store the Gemini key, resume, JDs, answers, interview reports, scores or feedback; they're kept in the student's browser (localStorage). The resume, JD and answers are still sent to Google Gemini with the student's own key, and spoken answers go to the browser's speech-to-text service. The database holds only sign-in and approval data: Google name and email, full name, SAP ID and approval status.
 - **The committee** (emails listed in `public.admins`) approves students and sees their names, SAP IDs and emails. Interview results are never visible to the committee.
 
 Stack: Next.js on Vercel, Supabase (Google sign-in, Postgres), Google Gemini (each student's own key), browser speech synthesis and speech recognition.
@@ -46,8 +46,8 @@ In Supabase, go to **Authentication > URL Configuration**:
    - `NEXT_PUBLIC_GEMINI_MODELS`: Gemini models to try in order, comma-separated, for example `gemini-2.5-flash,gemini-2.5-flash-lite` (see [AI models and busy periods](#ai-models-and-busy-periods)). The older single-model `NEXT_PUBLIC_GEMINI_MODEL` still works if this isn't set.
 3. Deploy, then put the Vercel address into Supabase's URL Configuration (step 5) and the Google OAuth client's JavaScript origins (step 4.3).
 
-### 7. Logos (optional)
-Put `logo-nmims.png` and `logo-analytica.png` in `public/`. They appear on the landing page.
+### 7. Logo (optional)
+Put `logo-analytica.png` in `public/`. It appears on the landing page. Don't add the NMIMS logo or name as branding without written permission from the university.
 
 ## Adding committee members
 In the Supabase SQL Editor, add the Google account email they'll sign in with:

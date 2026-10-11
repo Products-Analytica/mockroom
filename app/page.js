@@ -28,7 +28,6 @@ export default function Landing(){
     <section>
       <div className="masthead">
         <div className="logos">
-          <img src="/logo-nmims.png" alt="NMIMS" onError={e => { e.currentTarget.style.display = 'none'; }} />
           <img src="/logo-analytica.png" alt="Analytica" onError={e => { e.currentTarget.style.display = 'none'; }} />
         </div>
         <p className="eyebrow">Corporate Intelligence &amp; Knowledge Management - Mock Interview Room</p>

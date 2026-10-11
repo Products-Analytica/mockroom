@@ -12,13 +12,18 @@ export default function Privacy(){
       <p className="eyebrow">Analytica, SBM NMIMS Mumbai</p>
       <h1>Privacy Policy</h1>
       <p className="lede">How the Mock Interview Room handles your data.</p>
-      <p className="hint">Last updated: 10 October 2026</p>
+      <p className="hint">Last updated: 11 October 2026</p>
 
       <h2>What we collect</h2>
       <p>Only your Google account name and email (for sign-in), and the full name and SAP ID you enter.</p>
 
-      <h2>What stays on your device</h2>
-      <p>Your resume, the job descriptions you paste, your answers, your interview reports, scores and feedback, and your Gemini API key are stored only in your browser and are never sent to our database.</p>
+      <h2>What we never store</h2>
+      <p>We never store your resume, the job descriptions you paste, your answers, your interview reports, scores and feedback, your GD bookmarks or your Gemini API key. These are kept only in your browser.</p>
+      <p>Some of this is still sent to other services so the app can work:</p>
+      <ul>
+        <li><strong>Google Gemini:</strong> your resume, job description and answers are sent to Google using your own API key to generate questions and feedback. On Google&apos;s free tier, Google may use what you send to improve its products.</li>
+        <li><strong>Your browser&apos;s speech recognition:</strong> in spoken interviews, your voice is sent to your browser&apos;s speech service (Google in Chrome, Microsoft in Edge) to be transcribed.</li>
+      </ul>
 
       <h2>Who sees your data</h2>
       <p>Analytica committee members see your name, SAP ID and email to approve access.</p>
@@ -35,7 +40,7 @@ export default function Privacy(){
       <p>We delete all profiles (name, email, SAP ID) after the placement season ends, and within 30 days of any deletion request.</p>
 
       <h2>Deleting your data</h2>
-      <p>Email <Email /> to have your account deleted. Your interviews are stored only in your browser, and you can delete them yourself from your dashboard.</p>
+      <p>Email <Email /> to have your account deleted. We never store your interviews; they're kept only in your browser, and you can delete them yourself from your dashboard.</p>
 
       <h2>Contact</h2>
       <p><Email /></p>
