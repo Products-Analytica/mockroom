@@ -198,7 +198,7 @@ function JdMatcher({ onOpen }){
     setResult(next); saveGdResult(next);
   }
 
-  const errMsg = !err ? '' : err.isAuth ? null : err.allBusy ? BUSY : err.status === 0 || err.status === 404 ? err.message : `Something went wrong talking to the AI. ${err.message || ''}`;
+  const errMsg = !err ? '' : err.isAuth ? null : err.allBusy ? BUSY : err.dailyLimit || err.status === 0 || err.status === 404 ? err.message : `Something went wrong talking to the AI. ${err.message || ''}`;
 
   return (
     <div className="panel">

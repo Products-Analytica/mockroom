@@ -63,15 +63,19 @@ Students sign in with Google, then submit their full name and SAP ID (11 digits)
 - **Batch list:** upload a CSV with the columns `sap_id,full_name` (for example exported from the official class list). Students whose SAP ID is on this list are approved automatically when they submit their details. Duplicates are skipped and invalid rows are listed so you can fix them. Students who signed up before the list was uploaded are shown with a one-click **Approve** link. In Excel, format the SAP ID column as Text before exporting so long numbers aren't turned into `8.06E+10`.
 
 ## AI models and busy periods
-Google's free Gemini models are sometimes overloaded. The app handles this on its own, one request at a time:
-- **Busy (503 / "overloaded" / "high demand"):** retries the same model after 2 seconds, then 5 seconds, then moves to the next model in `NEXT_PUBLIC_GEMINI_MODELS`.
-- **Rate-limited (429):** waits 10 seconds and retries once, then moves to the next model.
-- **Retired or unknown model (404):** skips it straight away and doesn't try it again for the rest of the browser session.
+Each student's free Gemini key has per-minute and per-day limits for each model, and Google's models are sometimes overloaded. The app keeps requests low and handles limits on its own, one request at a time:
+- **Fewer requests:** answers are scored up to 4 per request instead of one each, so scoring makes about 70% fewer requests (an 8-question interview goes from about 18 requests to about 12).
+- **Pacing:** requests are spaced at least 2 seconds apart (7 seconds for a model that has already hit its per-minute limit), so a burst doesn't trip the limit.
+- **Busy (503 / "overloaded" / "high demand"):** retries the same model after 2 seconds, then 5 seconds, then moves to the next model.
+- **Per-minute limit (429):** waits the delay Google suggests (or 10 seconds), retries once, then moves to the next model.
+- **Daily limit used up (429, per-day quota):** skips that model until Google's daily reset (midnight Pacific time, about 12:30-1:30 pm IST) without retrying.
+- **Retired or unknown model (404):** skips it for the rest of the browser session.
+- **Backup models:** if every model in `NEXT_PUBLIC_GEMINI_MODELS` fails, the app asks Google which models the student's key can use and adds suitable "flash" text models as backups, newest first (once per session).
 - The model that last worked is tried first for the rest of the session, and each report records which model(s) answered.
 
-While this happens the student sees "The AI is busy, retrying…". Only if every model fails do they see "Google's AI is very busy right now. Your progress is saved. Press Retry in a minute." Retry carries on from where it stopped, so no answers are lost. Follow-up questions during the interview get one quick try per model and are skipped if the AI is busy, so the room never stalls.
+While this happens the student sees "The AI is busy, retrying…". If every model is busy they see "Google's AI is very busy right now. Your progress is saved. Press Retry in a minute." If every model's daily limit is used up, they're told when it resets and that they can connect a different key in Settings. Retry carries on from where it stopped, so no answers are lost. Follow-up questions during the interview get one quick try per model and are skipped if the AI is busy, so the room never stalls.
 
-When Google retires a model, update `NEXT_PUBLIC_GEMINI_MODELS` in Vercel and redeploy. List current models at ai.google.dev/gemini-api/docs/models.
+`NEXT_PUBLIC_GEMINI_MODELS` sets the preferred models; backups are found automatically, but update it when Google retires a model so students start on a good one. List current models at ai.google.dev/gemini-api/docs/models.
 
 ## Handover checklist
 When the committee changes:
